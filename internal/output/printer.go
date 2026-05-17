@@ -1,6 +1,6 @@
 package output
 
-import "fmt"
+import "io"
 
 type Printer interface {
 	Table(headers []string, rows [][]string)
@@ -9,11 +9,20 @@ type Printer interface {
 	JSON(v any)
 }
 
-type stubPrinter struct{}
+func NewPrinter(jsonMode, plainMode bool) Printer {
+	if jsonMode {
+		return &JSONPrinter{}
+	}
+	if plainMode {
+		return &PlainPrinter{}
+	}
+	return &RichPrinter{}
+}
 
-func (s *stubPrinter) Table(h []string, r [][]string) {}
-func (s *stubPrinter) Success(msg string)              { fmt.Println(msg) }
-func (s *stubPrinter) Error(msg string)                { fmt.Println("Error: " + msg) }
-func (s *stubPrinter) JSON(v any)                      { fmt.Printf("%+v\n", v) }
+func NewPlainPrinterTo(w io.Writer) *PlainPrinter {
+	return &PlainPrinter{w: w}
+}
 
-func NewPrinter(jsonMode, plainMode bool) Printer { return &stubPrinter{} }
+func NewJSONPrinterTo(w io.Writer) *JSONPrinter {
+	return &JSONPrinter{w: w}
+}
