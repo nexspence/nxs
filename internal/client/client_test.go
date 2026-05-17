@@ -96,3 +96,37 @@ func TestClient_Search(t *testing.T) {
 		t.Errorf("unexpected results: %+v", results)
 	}
 }
+
+func TestClient_UserList(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`[{"userId":"admin","firstName":"Admin","emailAddress":"a@b.com","roles":["nx-admin"]}]`))
+	}))
+	defer srv.Close()
+
+	c := client.New(srv.URL, "token")
+	users, err := c.UserList()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(users) != 1 || users[0].UserID != "admin" {
+		t.Errorf("unexpected: %+v", users)
+	}
+}
+
+func TestClient_SystemInfo(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"status":"UP","version":"1.8.0","appName":"Nexspence"}`))
+	}))
+	defer srv.Close()
+
+	c := client.New(srv.URL, "token")
+	info, err := c.SystemInfo()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Status != "UP" {
+		t.Errorf("expected UP, got %q", info.Status)
+	}
+}
