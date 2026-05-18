@@ -1,0 +1,47 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: nxs
+    main: ./cmd/nxs
+    binary: nxs
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w -X github.com/nexspence/nxs/cmd.version={{.Version}}
+
+archives:
+  - id: nxs
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    name_template: "nxs_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+brews:
+  - name: nxs
+    repository:
+      owner: nexspence
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: "https://nexspence.online"
+    description: "CLI for Nexspence artifact repository manager"
+    license: "AGPLv3"
+    install: bin.install "nxs"
+    test: |
+      system "#{bin}/nxs", "--version"
+
+release:
+  github:
+    owner: nexspence
+    name: nxs
+  draft: false
+  prerelease: auto
