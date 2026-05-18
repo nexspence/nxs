@@ -154,12 +154,8 @@ nxs search --repo maven-releases --q mylib --plain | awk '{print $5}'
 
 `nxs` connects to a running [Nexspence](https://github.com/skensell201/nexspence) instance.
 
-**Run Nexspence locally in 30 seconds:**
-```bash
-git clone https://github.com/skensell201/nexspence
-cd nexspence && docker compose up -d
-# → http://localhost:8081  admin / admin123
-```
+- **Releases:** [github.com/skensell201/nexspence/releases](https://github.com/skensell201/nexspence/releases)
+- **Deployment guide:** [docs/deployment.md](https://github.com/skensell201/nexspence/blob/main/docs/deployment.md)
 
 ---
 
