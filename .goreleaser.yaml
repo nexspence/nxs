@@ -26,22 +26,9 @@ archives:
 checksum:
   name_template: "checksums.txt"
 
-brews:
-  - name: nxs
-    repository:
-      owner: nexspence
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    homepage: "https://nexspence.online"
-    description: "CLI for Nexspence artifact repository manager"
-    license: "AGPLv3"
-    install: bin.install "nxs"
-    test: |
-      system "#{bin}/nxs", "--version"
-
 release:
   github:
-    owner: nexspence
+    owner: skensell201
     name: nxs
   draft: false
   prerelease: auto
