@@ -5,7 +5,7 @@
 # nxs
 
 <p align="center">
-  <strong>Official CLI for <a href="https://nexspence.online">Nexspence</a> — free, open-source artifact repository manager</strong>
+  <strong>Official CLI for <a href="https://nexspence.com">Nexspence</a> — free, open-source artifact repository manager</strong>
 </p>
 
 <p align="center">
