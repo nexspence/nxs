@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/logo.png" width="600" alt="Nexspence">
+</p>
+
 # nxs
 
 <p align="center">
