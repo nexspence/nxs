@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"sync/atomic"
 
 	"github.com/nexspence/nxs/internal/batch"
 	"github.com/nexspence/nxs/internal/output"
@@ -46,13 +47,13 @@ var pushCmd = &cobra.Command{
 		}
 
 		total := len(jobs)
-		done := 0
+		var done atomic.Int64
 		res := batch.RunPool(jobs, concurrency, continueOnError, func(j batch.Job) error {
 			remotePath := joinRemote(remotePrefix, j.RelPath)
 			err := nxsClient.Push(repo, remotePath, j.LocalPath, nil)
-			done++
+			n := done.Add(1)
 			if !flagJSON {
-				fmt.Fprintf(cmd.ErrOrStderr(), "[%d/%d] %s\n", done, total, j.RelPath)
+				fmt.Fprintf(cmd.ErrOrStderr(), "[%d/%d] %s\n", n, total, j.RelPath)
 			}
 			return err
 		})
