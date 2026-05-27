@@ -75,8 +75,10 @@ nxs repo info <name>                                   Show repository details
 
 ### Artifacts
 ```
-nxs push <repo> <remote-path> <local-file>             Upload an artifact
-nxs pull <repo> <remote-path> [-o DIR]                 Download an artifact
+nxs push <repo> <remote-prefix> <local>                Upload a file
+       [-r] [--concurrency N] [--continue-on-error]    …a directory or glob (-r)
+nxs pull <repo> <remote-prefix> [-o DIR]               Download a file
+       [-r] [--concurrency N] [--continue-on-error]    …everything under a prefix (-r)
 nxs search [--repo NAME] [--format FMT] [-q QUERY]     Search components
          [--tag KEY=VALUE]
 ```
@@ -86,6 +88,24 @@ nxs search [--repo NAME] [--format FMT] [-q QUERY]     Search components
 nxs user list                                          List all users
 nxs user create <username> --email EMAIL --password P  Create a user
 nxs role assign <username> <role>                      Assign a role to a user
+```
+
+### API Tokens
+```
+nxs token list                                         List your tokens
+nxs token create <name> [--expires-days N] [--scope S] Create a token (printed once)
+nxs token delete <id>                                  Revoke a token
+```
+
+### Promotion
+```
+nxs promote rules                                      List promotion rules
+nxs promote run --rule <name|id>                       Promote components
+              --component group:name:version           …by coordinates (repeatable)
+              [--component-id UUID]                     …or by raw ID
+nxs promote requests [--status STATUS]                 List promotion requests
+nxs promote approve <request-id>                       Approve a request
+nxs promote reject <request-id> [--reason TEXT]        Reject a request
 ```
 
 ### Operations
