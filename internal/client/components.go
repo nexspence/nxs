@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type Component struct {
@@ -132,4 +133,51 @@ func (c *Client) Pull(repo, remotePath, localPath string, progressFn func(size i
 	defer out.Close()
 	_, err = io.Copy(out, body)
 	return err
+}
+
+type Asset struct {
+	ID          string `json:"id"`
+	Repository  string `json:"repository"`
+	Path        string `json:"path"`
+	FileSize    int64  `json:"fileSize"`
+	DownloadURL string `json:"downloadUrl,omitempty"`
+	SHA256      string `json:"sha256,omitempty"`
+}
+
+type assetSearchResponse struct {
+	Items             []Asset `json:"items"`
+	ContinuationToken *string `json:"continuationToken"`
+}
+
+// SearchAssets lists assets in repo, optionally filtered to those whose path
+// starts with prefix. Pagination follows continuationToken.
+func (c *Client) SearchAssets(repo, prefix string) ([]Asset, error) {
+	req := c.r.R()
+	if repo != "" {
+		req = req.SetQueryParam("repository", repo)
+	}
+	var all []Asset
+	for {
+		resp, err := req.Get("/service/rest/v1/search/assets")
+		if err != nil {
+			return nil, err
+		}
+		if err := checkErr(resp); err != nil {
+			return nil, err
+		}
+		var page assetSearchResponse
+		if err := json.Unmarshal(resp.Body(), &page); err != nil {
+			return nil, err
+		}
+		for _, a := range page.Items {
+			if prefix == "" || strings.HasPrefix(a.Path, prefix) {
+				all = append(all, a)
+			}
+		}
+		if page.ContinuationToken == nil {
+			break
+		}
+		req = req.SetQueryParam("continuationToken", *page.ContinuationToken)
+	}
+	return all, nil
 }
