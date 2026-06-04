@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-26
 **Status:** Approved design
-**Repo:** `github.com/skensell201/nxs` (module `github.com/nexspence/nxs`)
+**Repo:** `github.com/nexspence/nxs` (module `github.com/nexspence/nxs`)
 
 ## Goal
 

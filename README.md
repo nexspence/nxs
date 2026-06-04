@@ -11,7 +11,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go&logoColor=white">
   <img src="https://img.shields.io/badge/License-AGPLv3-22c55e?style=flat-square">
-  <img src="https://img.shields.io/github/v/release/skensell201/nxs?style=flat-square&color=3b82f6">
+  <img src="https://img.shields.io/github/v/release/nexspence/nxs?style=flat-square&color=3b82f6">
 </p>
 
 ---
@@ -24,7 +24,7 @@
 
 **macOS / Linux (curl):**
 ```bash
-curl -sSfL https://raw.githubusercontent.com/skensell201/nxs/main/install.sh | sh
+curl -sSfL https://raw.githubusercontent.com/nexspence/nxs/main/install.sh | sh
 ```
 
 **Build from source:**
@@ -176,10 +176,10 @@ nxs search --repo maven-releases --q mylib --plain | awk '{print $5}'
 
 ## Nexspence Server
 
-`nxs` connects to a running [Nexspence](https://github.com/skensell201/nexspence) instance.
+`nxs` connects to a running [Nexspence](https://github.com/nexspence/nexspence) instance.
 
-- **Releases:** [github.com/skensell201/nexspence/releases](https://github.com/skensell201/nexspence/releases)
-- **Deployment guide:** [docs/deployment.md](https://github.com/skensell201/nexspence/blob/main/docs/deployment.md)
+- **Releases:** [github.com/nexspence/nexspence/releases](https://github.com/nexspence/nexspence/releases)
+- **Deployment guide:** [docs/deployment.md](https://github.com/nexspence/nexspence/blob/main/docs/deployment.md)
 
 ---
 

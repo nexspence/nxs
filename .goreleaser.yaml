@@ -28,7 +28,7 @@ checksum:
 
 release:
   github:
-    owner: skensell201
+    owner: nexspence
     name: nxs
   draft: false
   prerelease: auto
