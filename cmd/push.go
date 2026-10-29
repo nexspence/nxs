@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"net/url"
 	"path/filepath"
 	"sync/atomic"
 
@@ -23,6 +24,11 @@ var pushCmd = &cobra.Command{
 		recursive, _ := cmd.Flags().GetBool("recursive")
 		concurrency, _ := cmd.Flags().GetInt("concurrency")
 		continueOnError, _ := cmd.Flags().GetBool("continue-on-error")
+		suites, _ := cmd.Flags().GetStringArray("suite")
+		var query url.Values
+		if len(suites) > 0 {
+			query = url.Values{"suite": suites}
+		}
 
 		jobs, err := batch.Walk(local, recursive)
 		if err != nil {
@@ -39,7 +45,7 @@ var pushCmd = &cobra.Command{
 				}
 				return bar
 			}
-			if err := nxsClient.Push(repo, remotePath, jobs[0].LocalPath, progressFn); err != nil {
+			if err := nxsClient.Push(repo, remotePath, jobs[0].LocalPath, query, progressFn); err != nil {
 				return err
 			}
 			printer.Success(fmt.Sprintf("Uploaded %s → %s/%s", local, repo, remotePath))
@@ -50,7 +56,7 @@ var pushCmd = &cobra.Command{
 		var done atomic.Int64
 		res := batch.RunPool(jobs, concurrency, continueOnError, func(j batch.Job) error {
 			remotePath := joinRemote(remotePrefix, j.RelPath)
-			err := nxsClient.Push(repo, remotePath, j.LocalPath, nil)
+			err := nxsClient.Push(repo, remotePath, j.LocalPath, query, nil)
 			n := done.Add(1)
 			if !flagJSON {
 				fmt.Fprintf(cmd.ErrOrStderr(), "[%d/%d] %s\n", n, total, j.RelPath)
@@ -82,5 +88,6 @@ func init() {
 	pushCmd.Flags().BoolP("recursive", "r", false, "Upload a directory tree")
 	pushCmd.Flags().Int("concurrency", 4, "Parallel uploads")
 	pushCmd.Flags().Bool("continue-on-error", false, "Keep going after a failed upload")
+	pushCmd.Flags().StringArray("suite", nil, "apt: list the uploaded .deb files in this suite (dists/<suite>/); repeatable. Needs a server with apt suites")
 	rootCmd.AddCommand(pushCmd)
 }

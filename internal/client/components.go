@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -67,8 +68,9 @@ func (c *Client) Search(params SearchParams) ([]Component, error) {
 	return all, nil
 }
 
-// Push streams localFile to PUT /repository/<repo>/<remotePath>.
-func (c *Client) Push(repo, remotePath, localFile string, progressFn func(size int64) io.Writer) error {
+// Push streams localFile to PUT /repository/<repo>/<remotePath>, with query
+// appended when it has any parameters (e.g. apt's "suite").
+func (c *Client) Push(repo, remotePath, localFile string, query url.Values, progressFn func(size int64) io.Writer) error {
 	f, err := os.Open(localFile)
 	if err != nil {
 		return fmt.Errorf("open %s: %w", localFile, err)
@@ -87,8 +89,11 @@ func (c *Client) Push(repo, remotePath, localFile string, progressFn func(size i
 		}
 	}
 
-	url := c.base + "/repository/" + repo + "/" + remotePath
-	req, err := http.NewRequest(http.MethodPut, url, body)
+	target := c.base + "/repository/" + repo + "/" + remotePath
+	if len(query) > 0 {
+		target += "?" + query.Encode()
+	}
+	req, err := http.NewRequest(http.MethodPut, target, body)
 	if err != nil {
 		return err
 	}
@@ -101,9 +106,25 @@ func (c *Client) Push(repo, remotePath, localFile string, progressFn func(size i
 	}
 	defer httpResp.Body.Close()
 	if httpResp.StatusCode >= 300 {
+		if msg := serverError(httpResp.Body); msg != "" {
+			return fmt.Errorf("upload failed: server returned %d: %s", httpResp.StatusCode, msg)
+		}
 		return fmt.Errorf("upload failed: server returned %d", httpResp.StatusCode)
 	}
 	return nil
+}
+
+// serverError reads the "error" field of a JSON error body, if there is one:
+// the server says why it refused (a conflicting file and where it is stored,
+// an invalid suite name, a read-only repository).
+func serverError(body io.Reader) string {
+	var e struct {
+		Error string `json:"error"`
+	}
+	if err := json.NewDecoder(io.LimitReader(body, 64<<10)).Decode(&e); err != nil {
+		return ""
+	}
+	return e.Error
 }
 
 // Pull downloads /repository/<repo>/<remotePath> to localPath.
