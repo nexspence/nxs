@@ -2,7 +2,6 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 type User struct {
@@ -26,7 +25,14 @@ func (c *Client) UserList() ([]User, error) {
 	return users, json.Unmarshal(resp.Body(), &users)
 }
 
+// UserCreate creates a local user. The roles are given by name and resolved to
+// ids here: the server stores role assignments by id, and a name handed to it
+// directly fails the assignment.
 func (c *Client) UserCreate(userID, firstName, lastName, email, password string, roles []string) error {
+	roleIDs, err := c.resolveRoleIDs(roles)
+	if err != nil {
+		return err
+	}
 	body := map[string]any{
 		"userId":       userID,
 		"firstName":    firstName,
@@ -34,7 +40,7 @@ func (c *Client) UserCreate(userID, firstName, lastName, email, password string,
 		"emailAddress": email,
 		"password":     password,
 		"status":       "active",
-		"roles":        roles,
+		"roles":        roleIDs,
 	}
 	resp, err := c.r.R().
 		SetHeader("Content-Type", "application/json").
@@ -44,38 +50,4 @@ func (c *Client) UserCreate(userID, firstName, lastName, email, password string,
 		return err
 	}
 	return checkErr(resp)
-}
-
-func (c *Client) RoleAssign(userID string, roles []string) error {
-	resp, err := c.r.R().
-		SetQueryParam("userId", userID).
-		Get("/service/rest/v1/security/users")
-	if err != nil {
-		return err
-	}
-	if err := checkErr(resp); err != nil {
-		return err
-	}
-	var users []User
-	if err := json.Unmarshal(resp.Body(), &users); err != nil || len(users) == 0 {
-		return fmt.Errorf("user %q not found", userID)
-	}
-	u := users[0]
-	existing := map[string]bool{}
-	for _, r := range u.Roles {
-		existing[r] = true
-	}
-	for _, r := range roles {
-		if !existing[r] {
-			u.Roles = append(u.Roles, r)
-		}
-	}
-	resp2, err := c.r.R().
-		SetHeader("Content-Type", "application/json").
-		SetBody(u).
-		Put("/service/rest/v1/security/users/" + userID)
-	if err != nil {
-		return err
-	}
-	return checkErr(resp2)
 }
