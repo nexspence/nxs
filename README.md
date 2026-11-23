@@ -97,8 +97,15 @@ nxs search [--repo NAME] [--format FMT] [-q QUERY]     Search components
 ```
 nxs user list                                          List all users
 nxs user create <username> --email EMAIL --password P  Create a user
+       [--role ROLE]                                   …and give it a role (repeatable)
+nxs role list                                          List the roles on the server
 nxs role assign <username> <role>                      Assign a role to a user
+nxs role revoke <username> <role>                      Revoke a role from a user
 ```
+
+> A role is a name here and an id on the wire — the CLI resolves the names to
+> the ids the server stores. A role that the server does not know is an error,
+> not a silent skip.
 
 ### API Tokens
 ```
