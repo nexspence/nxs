@@ -77,6 +77,7 @@ try {
             -OutFile $checksumsPath -UseBasicParsing
         $expected = (Get-Content $checksumsPath |
             Where-Object { $_ -match "\s+$([regex]::Escape($archive))\s*$" } |
+            Select-Object -First 1 |
             ForEach-Object { ($_ -split '\s+')[0] })
 
         if ($expected) {
