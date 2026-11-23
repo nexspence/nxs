@@ -27,6 +27,16 @@
 curl -sSfL https://raw.githubusercontent.com/nexspence/nxs/main/install.sh | sh
 ```
 
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/nexspence/nxs/main/install.ps1 | iex
+```
+
+The Windows installer places the binary in `%LOCALAPPDATA%\Programs\nxs` and adds
+it to the user `PATH` — no administrator rights required. It verifies the
+archive against the `checksums.txt` published with the release. Pin a version
+with `-Version v0.4.0`, or choose the directory with `-InstallDir`.
+
 **Build from source:**
 ```bash
 go install github.com/nexspence/nxs/cmd/nxs@latest
