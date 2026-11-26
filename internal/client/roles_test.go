@@ -143,3 +143,135 @@ func TestClient_UserCreate_ResolvesRoleNames(t *testing.T) {
 		t.Errorf("roles = %v, want the deployer id", roles)
 	}
 }
+
+// The create call carries the role name.
+func TestClient_RoleCreate_SendsName(t *testing.T) {
+	var gotPath string
+	var gotBody map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/service/rest/v1/security/roles" {
+			t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		gotPath = r.URL.Path
+		b, _ := io.ReadAll(r.Body)
+		json.Unmarshal(b, &gotBody)
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(`{"id":"22222222-2222-2222-2222-222222222222","name":"nx-deployer"}`))
+	}))
+	defer srv.Close()
+
+	c := client.New(srv.URL, "token")
+	if err := c.RoleCreate("nx-deployer"); err != nil {
+		t.Fatal(err)
+	}
+	if gotPath != "/service/rest/v1/security/roles" {
+		t.Errorf("create went to %q", gotPath)
+	}
+	if gotBody["name"] != "nx-deployer" {
+		t.Errorf("name = %v, want nx-deployer", gotBody["name"])
+	}
+}
+
+// The rename addresses the role by the id the server stores, and keeps the
+// description the server would otherwise clear.
+func TestClient_RoleUpdate_RenamesByID(t *testing.T) {
+	var gotPath string
+	var gotBody map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/service/rest/v1/security/roles":
+			w.Write([]byte(`[{"id":"22222222-2222-2222-2222-222222222222","name":"nx-deployer","description":"Deployer"}]`))
+		case r.Method == http.MethodPut && r.URL.Path == "/service/rest/v1/security/roles/22222222-2222-2222-2222-222222222222":
+			gotPath = r.URL.Path
+			b, _ := io.ReadAll(r.Body)
+			json.Unmarshal(b, &gotBody)
+			w.Write([]byte(`{"id":"22222222-2222-2222-2222-222222222222","name":"nx-deploy"}`))
+		default:
+			t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	}))
+	defer srv.Close()
+
+	c := client.New(srv.URL, "token")
+	if err := c.RoleUpdate("nx-deployer", "nx-deploy"); err != nil {
+		t.Fatal(err)
+	}
+	if gotPath != "/service/rest/v1/security/roles/22222222-2222-2222-2222-222222222222" {
+		t.Errorf("update went to %q", gotPath)
+	}
+	if gotBody["name"] != "nx-deploy" {
+		t.Errorf("name = %v, want nx-deploy", gotBody["name"])
+	}
+	if gotBody["description"] != "Deployer" {
+		t.Errorf("description = %v, want the current one", gotBody["description"])
+	}
+}
+
+// A role the server does not know is an error, not a silent skip.
+func TestClient_RoleUpdate_UnknownRole(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method == http.MethodGet && r.URL.Path == "/service/rest/v1/security/roles" {
+			w.Write([]byte(`[{"id":"22222222-2222-2222-2222-222222222222","name":"nx-deployer"}]`))
+			return
+		}
+		t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	c := client.New(srv.URL, "token")
+	if err := c.RoleUpdate("nx-nope", "nx-other"); err == nil {
+		t.Fatal("expected an error for an unknown role")
+	}
+}
+
+// The delete addresses the role by the id the server stores, not by its name.
+func TestClient_RoleDelete_ResolvesNameToID(t *testing.T) {
+	var gotPath string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/service/rest/v1/security/roles":
+			w.Write([]byte(`[{"id":"22222222-2222-2222-2222-222222222222","name":"nx-deployer"}]`))
+		case r.Method == http.MethodDelete && r.URL.Path == "/service/rest/v1/security/roles/22222222-2222-2222-2222-222222222222":
+			gotPath = r.URL.Path
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	}))
+	defer srv.Close()
+
+	c := client.New(srv.URL, "token")
+	if err := c.RoleDelete("nx-deployer"); err != nil {
+		t.Fatal(err)
+	}
+	if gotPath != "/service/rest/v1/security/roles/22222222-2222-2222-2222-222222222222" {
+		t.Errorf("delete went to %q", gotPath)
+	}
+}
+
+// A role the server does not know is an error, not a silent skip.
+func TestClient_RoleDelete_UnknownRole(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method == http.MethodGet && r.URL.Path == "/service/rest/v1/security/roles" {
+			w.Write([]byte(`[{"id":"22222222-2222-2222-2222-222222222222","name":"nx-deployer"}]`))
+			return
+		}
+		t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	c := client.New(srv.URL, "token")
+	if err := c.RoleDelete("nx-nope"); err == nil {
+		t.Fatal("expected an error for an unknown role")
+	}
+}

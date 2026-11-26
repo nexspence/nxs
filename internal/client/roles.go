@@ -132,3 +132,75 @@ func (c *Client) RoleRevoke(userID string, roles []string) error {
 	}
 	return checkErr(resp)
 }
+
+// resolveRole finds the role a name or an id refers to. The CLI names roles
+// while the endpoints address them by id, so the translation happens here. A
+// role the server does not know is an error rather than a silent skip: the
+// caller asked for a role and would otherwise believe it acted on one.
+func (c *Client) resolveRole(ref string) (Role, error) {
+	roles, err := c.RoleList()
+	if err != nil {
+		return Role{}, err
+	}
+	for _, r := range roles {
+		if r.Name == ref {
+			return r, nil
+		}
+	}
+	for _, r := range roles {
+		if r.ID == ref {
+			return r, nil
+		}
+	}
+	return Role{}, fmt.Errorf("role %q not found", ref)
+}
+
+// RoleCreate creates a role with the given name.
+func (c *Client) RoleCreate(name string) error {
+	resp, err := c.r.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(map[string]string{"name": name}).
+		Post("/service/rest/v1/security/roles")
+	if err != nil {
+		return err
+	}
+	return checkErr(resp)
+}
+
+// RoleUpdate renames a role.
+//
+// The description is sent back unchanged because the update rewrites the
+// whole row: a payload without one would clear it. The privileges are left
+// out of the payload for the opposite reason — the server keeps the current
+// set only when the field is absent, and would replace it with an empty list
+// if it were sent as one.
+func (c *Client) RoleUpdate(role, newName string) error {
+	current, err := c.resolveRole(role)
+	if err != nil {
+		return err
+	}
+	resp, err := c.r.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(map[string]string{
+			"name":        newName,
+			"description": current.Description,
+		}).
+		Put("/service/rest/v1/security/roles/" + url.PathEscape(current.ID))
+	if err != nil {
+		return err
+	}
+	return checkErr(resp)
+}
+
+// RoleDelete removes a role. The role may be given by name or by id.
+func (c *Client) RoleDelete(role string) error {
+	current, err := c.resolveRole(role)
+	if err != nil {
+		return err
+	}
+	resp, err := c.r.R().Delete("/service/rest/v1/security/roles/" + url.PathEscape(current.ID))
+	if err != nil {
+		return err
+	}
+	return checkErr(resp)
+}
