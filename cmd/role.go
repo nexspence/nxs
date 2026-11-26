@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -67,7 +68,72 @@ var roleRevokeCmd = &cobra.Command{
 	},
 }
 
+var roleCreateCmd = &cobra.Command{
+	Use:   "create <name>",
+	Short: "Create a role",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := requireClient(); err != nil {
+			return err
+		}
+		if err := nxsClient.RoleCreate(args[0]); err != nil {
+			return err
+		}
+		printer.Success(fmt.Sprintf("Role %q created", args[0]))
+		return nil
+	},
+}
+
+var roleUpdateCmd = &cobra.Command{
+	Use:   "update <name> --name NEW-NAME",
+	Short: "Rename a role",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := requireClient(); err != nil {
+			return err
+		}
+		newName, _ := cmd.Flags().GetString("name")
+		if newName == "" {
+			return fmt.Errorf("--name is required")
+		}
+		if err := nxsClient.RoleUpdate(args[0], newName); err != nil {
+			return err
+		}
+		printer.Success(fmt.Sprintf("Role %q renamed to %q", args[0], newName))
+		return nil
+	},
+}
+
+var roleDeleteCmd = &cobra.Command{
+	Use:   "delete <name>",
+	Short: "Delete a role",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := requireClient(); err != nil {
+			return err
+		}
+		force, _ := cmd.Flags().GetBool("force")
+		if !force {
+			fmt.Printf("Delete role %q? This cannot be undone. [y/N]: ", args[0])
+			var confirm string
+			fmt.Scanln(&confirm)
+			if strings.ToLower(confirm) != "y" {
+				fmt.Println("Cancelled.")
+				return nil
+			}
+		}
+		if err := nxsClient.RoleDelete(args[0]); err != nil {
+			return err
+		}
+		printer.Success(fmt.Sprintf("Role %q deleted", args[0]))
+		return nil
+	},
+}
+
 func init() {
-	roleCmd.AddCommand(roleListCmd, roleAssignCmd, roleRevokeCmd)
+	roleUpdateCmd.Flags().String("name", "", "New name for the role (required)")
+	roleDeleteCmd.Flags().Bool("force", false, "Skip confirmation prompt")
+
+	roleCmd.AddCommand(roleListCmd, roleCreateCmd, roleUpdateCmd, roleDeleteCmd, roleAssignCmd, roleRevokeCmd)
 	rootCmd.AddCommand(roleCmd)
 }

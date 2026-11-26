@@ -23,12 +23,13 @@ func (c *Client) SystemInfo() (*SystemInfo, error) {
 	return &info, json.Unmarshal(resp.Body(), &info)
 }
 
-// CleanupRun triggers immediate execution of a cleanup policy by name.
-// Verify the exact endpoint path in nexspence-core internal/api/router.go before use.
-func (c *Client) CleanupRun(policyName string) error {
+// CleanupRun triggers immediate execution of a cleanup policy by id.
+// The endpoint addresses a policy by its id, so a name has to be resolved to
+// one before it is called.
+func (c *Client) CleanupRun(policyID string) error {
 	resp, err := c.r.R().
 		SetHeader("Content-Type", "application/json").
-		Post(fmt.Sprintf("/api/v1/cleanup-policies/%s/run", policyName))
+		Post(fmt.Sprintf("/service/rest/v1/cleanup-policies/%s/run", policyID))
 	if err != nil {
 		return err
 	}

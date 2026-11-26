@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -16,6 +17,15 @@ type Component struct {
 	Group      string `json:"group"`
 	Name       string `json:"name"`
 	Version    string `json:"version"`
+}
+
+// ComponentDelete removes the component with the given id.
+func (c *Client) ComponentDelete(id string) error {
+	resp, err := c.r.R().Delete("/service/rest/v1/components/" + url.PathEscape(id))
+	if err != nil {
+		return err
+	}
+	return checkErr(resp)
 }
 
 type SearchParams struct {

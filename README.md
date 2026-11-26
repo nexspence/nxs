@@ -81,7 +81,18 @@ nxs repo list [--format FORMAT] [--type TYPE]          List repositories
 nxs repo create <name> --format FORMAT --type TYPE     Create a repository
 nxs repo delete <name> [--force]                       Delete a repository
 nxs repo info <name>                                   Show repository details
+nxs repo update <name> [--online|--offline]            Change a repository
+       [--description TEXT]                            …its description
+       [--write-policy allow|allow_once|deny]          …its write policy
+       [--allow-redeploy-latest]                       …whether a redeploy is allowed
+       [--pull-block-severity LEVEL]                   …the severity that blocks a pull
+       [--member NAME]                                 …the members of a group (repeatable)
 ```
+
+> Only the flags you name are sent: a setting you do not mention stays as it
+> is. The settings that belong to a repository's `formatConfig` — the write
+> policy, the pull gate, the group members — are sent inside it, which is
+> where the server keeps them.
 
 ### Artifacts
 ```
@@ -91,6 +102,7 @@ nxs pull <repo> <remote-prefix> [-o DIR]               Download a file
        [-r] [--concurrency N] [--continue-on-error]    …everything under a prefix (-r)
 nxs search [--repo NAME] [--format FMT] [-q QUERY]     Search components
          [--tag KEY=VALUE]
+nxs component delete <id> [--force]                    Delete a component and its assets
 ```
 
 ### Users & Roles
@@ -98,7 +110,14 @@ nxs search [--repo NAME] [--format FMT] [-q QUERY]     Search components
 nxs user list                                          List all users
 nxs user create <username> --email EMAIL --password P  Create a user
        [--role ROLE]                                   …and give it a role (repeatable)
+nxs user update <username> [--first-name F]             Update a user
+       [--last-name L] [--email E] [--role ROLE]       …its profile and its roles (repeatable)
+nxs user delete <username> [--force]                    Delete a user
+nxs user password <username> --password PASSWORD        Change a user's password
 nxs role list                                          List the roles on the server
+nxs role create <name>                                 Create a role
+nxs role update <name> --name NEW-NAME                 Rename a role
+nxs role delete <name> [--force]                       Delete a role
 nxs role assign <username> <role>                      Assign a role to a user
 nxs role revoke <username> <role>                      Revoke a role from a user
 ```
@@ -106,6 +125,9 @@ nxs role revoke <username> <role>                      Revoke a role from a user
 > A role is a name here and an id on the wire — the CLI resolves the names to
 > the ids the server stores. A role that the server does not know is an error,
 > not a silent skip.
+>
+> The password of a user is a secret: it is never echoed, never printed in the
+> `--json` output, and never part of an error message.
 
 ### API Tokens
 ```
@@ -127,14 +149,27 @@ nxs promote reject <request-id> [--reason TEXT]        Reject a request
 
 ### Operations
 ```
-nxs cleanup run <policy-name>                          Run a cleanup policy now
-nxs blobstore list                                     List blob stores
-nxs blobstore info <name>                              Show blob store details
-nxs blobstore compact <name> [--dry-run] [--min-age D] Garbage-collect unreferenced blobs
-nxs migrate from <nexus-url> [--user U] [--repos]     Migrate from Nexus
+nxs cleanup list                                         List the cleanup policies
+nxs cleanup create <name> [--format FORMAT] [--age D]    Create a cleanup policy
+              [--cron EXPR] [--dry-run] [--enabled]      …its schedule and its criteria
+              [--retain-versions N] [--repository NAME]
+              [--path-prefix PREFIX] [--name-glob GLOB]
+nxs cleanup update <name|id> [ …the same options… ]      Change a cleanup policy
+nxs cleanup delete <name|id> [--force]                    Delete a cleanup policy
+nxs cleanup preview <name|id>                             Show what a policy would remove
+nxs cleanup run <policy-name>                             Run a cleanup policy now
+nxs blobstore list                                       List blob stores
+nxs blobstore info <name>                                Show blob store details
+nxs blobstore compact <name> [--dry-run] [--min-age D]   Garbage-collect unreferenced blobs
+nxs migrate from <nexus-url> [--user U] [--repos]         Migrate from Nexus
                 [--users] [--blobs]
-nxs health [--watch]                                   Show server status
+nxs audit [--limit N] [--offset N] [--domain D]          Read the audit log
+           [--action A] [--username U] [--from DATE] [--to DATE]
+nxs health [--watch]                                     Show server status
 ```
+
+> `nxs cleanup preview` answers what a policy would remove without removing
+> it — the way to find out what a policy does before it runs.
 
 ### Output flags (global)
 ```
