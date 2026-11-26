@@ -9,11 +9,11 @@
 #
 # or with an explicit version and install directory:
 #
-#   .\install.ps1 -Version v0.4.0 -InstallDir "$env:LOCALAPPDATA\Programs\nxs"
+#   .\install.ps1 -Version v0.5.0 -InstallDir "$env:LOCALAPPDATA\Programs\nxs"
 
 [CmdletBinding()]
 param(
-    # Pin a release tag (e.g. v0.4.0). Defaults to the latest release.
+    # Pin a release tag (e.g. v0.5.0). Defaults to the latest release.
     [string] $Version,
     # Where the binary is placed. Defaults to %LOCALAPPDATA%\Programs\nxs.
     [string] $InstallDir
@@ -46,7 +46,7 @@ if (-not $Version) {
     $Version = $release.tag_name
 }
 if ($Version -notmatch '^v\d+\.\d+\.\d+') {
-    throw "Unrecognised version '$Version' (expected a tag like v0.4.0)"
+    throw "Unrecognised version '$Version' (expected a tag like v0.5.0)"
 }
 
 # ── paths ─────────────────────────────────────────────────────────────────────
