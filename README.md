@@ -98,6 +98,7 @@ nxs repo update <name> [--online|--offline]            Change a repository
 ```
 nxs push <repo> <remote-prefix> <local>                Upload a file
        [-r] [--concurrency N] [--continue-on-error]    …a directory or glob (-r)
+       [--suite NAME]...                               apt: list it in dists/NAME/
 nxs pull <repo> <remote-prefix> [-o DIR]               Download a file
        [-r] [--concurrency N] [--continue-on-error]    …everything under a prefix (-r)
 nxs search [--repo NAME] [--format FMT] [-q QUERY]     Search components
@@ -219,6 +220,10 @@ export NXS_TOKEN=${{ secrets.NXS_TOKEN }}
 
 # Upload build artifact
 nxs push releases target/app-1.2.0.jar com/example/app/1.2.0/app-1.2.0.jar
+
+# apt: one repository, one suite per release line (repeat --suite for several).
+# The same .deb pushed again with another suite is stored once and joins it.
+nxs push apt-acme pool/main ./debs -r --suite acme-1.5.1
 
 # JSON output for scripting
 nxs repo list --json | jq '.[].name'
